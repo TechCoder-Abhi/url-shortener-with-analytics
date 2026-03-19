@@ -18,6 +18,8 @@ const urlSchema = new mongoose.Schema({
             }
         }
     ]
+}, {
+    timestamps: true
 });
 
 const Url = mongoose.model("Url", urlSchema);
