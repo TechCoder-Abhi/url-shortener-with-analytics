@@ -9,6 +9,23 @@ A simple REST API built with Node.js, Express, and MongoDB that shortens long UR
 - **shortid** — short URL ID generation
 - **dotenv** — environment variable management
 
+## Features
+
+- Create short URLs from long links
+- Optional custom short alias support
+- Alias validation (4-30 chars, letters/numbers/_/-)
+- Alias uniqueness check with conflict response
+- Auto-generate short IDs when alias is not provided
+- URL normalization (auto-add https:// when protocol is missing)
+- URL validation (accepts only http/https links)
+- Redirect to original URL using short path
+- Click tracking on each redirect
+- Analytics endpoint with click history
+- Metadata endpoint for a short URL
+- Auto timestamps with createdAt and updatedAt
+- IST-friendly time fields in API responses
+- Consistent JSON error responses for invalid/missing data
+
 ## Project Structure
 
 ```
@@ -77,17 +94,26 @@ A simple REST API built with Node.js, Express, and MongoDB that shortens long UR
 **Request Body:**
 ```json
 {
-  "url": "https://www.example.com/some/very/long/url"
+  "url": "https://www.example.com/some/very/long/url",
+  "customAlias": "my-link-2026"
 }
 ```
+
+`customAlias` is optional. If provided, it must be 4-30 characters and can include letters, numbers, `_`, and `-`.
+
+If protocol is missing, the API auto-normalizes the URL to `https://...`.
 
 **Response:**
 ```json
 {
-  "id": "abc123",
-  "shortUrl": "http://localhost:8001/url/abc123"
+  "id": "my-link-2026",
+  "shortUrl": "http://localhost:8001/url/my-link-2026"
 }
 ```
+
+**Error Cases:**
+- `400` for invalid URL or invalid alias format
+- `409` if `customAlias` is already taken
 
 ---
 
@@ -107,15 +133,52 @@ Redirects the browser to the original URL and records the visit timestamp.
 
 Returns total click count and visit history for a short URL.
 
+Timestamps are returned in UTC (`timestamp`) and IST (`timestampIST`).
+
 **Response:**
 ```json
 {
   "totalClicks": 3,
+  "timezone": "Asia/Kolkata",
   "analytics": [
-    { "_id": "...", "timestamp": "2026-03-17T10:00:00.000Z" },
-    { "_id": "...", "timestamp": "2026-03-17T11:30:00.000Z" },
-    { "_id": "...", "timestamp": "2026-03-17T14:15:00.000Z" }
+    {
+      "_id": "...",
+      "timestamp": "2026-03-17T10:00:00.000Z",
+      "timestampIST": "17/03/2026, 15:30:00"
+    },
+    {
+      "_id": "...",
+      "timestamp": "2026-03-17T11:30:00.000Z",
+      "timestampIST": "17/03/2026, 17:00:00"
+    },
+    {
+      "_id": "...",
+      "timestamp": "2026-03-17T14:15:00.000Z",
+      "timestampIST": "17/03/2026, 19:45:00"
+    }
   ]
 }
 ```
 
+---
+
+### Get URL Metadata
+
+**GET** `/url/meta/:shortId`
+
+Returns metadata for a short URL.
+
+**Response:**
+```json
+{
+  "id": "abc123",
+  "redirectUrl": "https://www.example.com/some/very/long/url",
+  "shortUrl": "http://localhost:8001/url/abc123",
+  "createdAt": "2026-03-18T10:00:00.000Z",
+  "createdAtIST": "18/03/2026, 15:30:00",
+  "updatedAt": "2026-03-18T10:05:00.000Z",
+  "updatedAtIST": "18/03/2026, 15:35:00",
+  "timezone": "Asia/Kolkata",
+  "totalClicks": 3
+}
+```
