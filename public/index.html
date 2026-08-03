@@ -1,0 +1,806 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>URL Shortener</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            padding: 20px;
+        }
+
+        .container {
+            background: white;
+            border-radius: 12px;
+            box-shadow: 0 20px 60px rgba(0, 0, 0, 0.3);
+            max-width: 500px;
+            width: 100%;
+            padding: 40px;
+        }
+
+        h1 {
+            color: #333;
+            margin-bottom: 10px;
+            text-align: center;
+            font-size: 2em;
+        }
+
+        .subtitle {
+            text-align: center;
+            color: #666;
+            margin-bottom: 30px;
+            font-size: 0.95em;
+        }
+
+        .form-group {
+            margin-bottom: 20px;
+        }
+
+        label {
+            display: block;
+            margin-bottom: 8px;
+            color: #333;
+            font-weight: 500;
+            font-size: 0.95em;
+        }
+
+        input {
+            width: 100%;
+            padding: 12px 15px;
+            border: 2px solid #e0e0e0;
+            border-radius: 8px;
+            font-size: 1em;
+            transition: border-color 0.3s;
+            font-family: inherit;
+        }
+
+        input:focus {
+            outline: none;
+            border-color: #667eea;
+        }
+
+        .button-group {
+            display: flex;
+            gap: 10px;
+            margin-top: 25px;
+        }
+
+        button {
+            flex: 1;
+            padding: 12px 20px;
+            border: none;
+            border-radius: 8px;
+            font-size: 1em;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.3s;
+        }
+
+        .btn-shorten {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+        }
+
+        .btn-shorten:hover:not(:disabled) {
+            transform: translateY(-2px);
+            box-shadow: 0 10px 20px rgba(102, 126, 234, 0.4);
+        }
+
+        .btn-shorten:disabled {
+            opacity: 0.6;
+            cursor: not-allowed;
+        }
+
+        .btn-reset {
+            background: #f0f0f0;
+            color: #333;
+        }
+
+        .btn-reset:hover {
+            background: #e0e0e0;
+        }
+
+        .result-section {
+            margin-top: 30px;
+            padding-top: 30px;
+            border-top: 2px solid #f0f0f0;
+            display: none;
+        }
+
+        .result-section.show {
+            display: block;
+        }
+
+        .result-label {
+            color: #666;
+            font-size: 0.9em;
+            margin-bottom: 10px;
+            display: block;
+        }
+
+        .result-url {
+            background: #f8f9fa;
+            padding: 15px;
+            border-radius: 8px;
+            word-break: break-all;
+            color: #667eea;
+            font-weight: 600;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            gap: 10px;
+        }
+
+        .copy-btn {
+            background: #667eea;
+            color: white;
+            border: none;
+            padding: 8px 15px;
+            border-radius: 6px;
+            cursor: pointer;
+            font-size: 0.9em;
+            font-weight: 600;
+            white-space: nowrap;
+            transition: all 0.3s;
+        }
+
+        .copy-btn:hover {
+            background: #764ba2;
+        }
+
+        .copy-btn.copied {
+            background: #4caf50;
+        }
+
+        .stats-section {
+            background: #f8f9fa;
+            padding: 15px;
+            border-radius: 8px;
+            margin-top: 15px;
+        }
+
+        .stat-item {
+            display: flex;
+            justify-content: space-between;
+            padding: 8px 0;
+            color: #333;
+        }
+
+        .stat-item strong {
+            color: #667eea;
+        }
+
+        .analytics-btn {
+            background: #667eea;
+            color: white;
+            border: none;
+            padding: 10px 15px;
+            border-radius: 6px;
+            cursor: pointer;
+            margin-top: 15px;
+            width: 100%;
+            font-weight: 600;
+            transition: all 0.3s;
+        }
+
+        .analytics-btn:hover {
+            background: #764ba2;
+        }
+
+        .analytics-modal {
+            display: none;
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: rgba(0, 0, 0, 0.5);
+            z-index: 1000;
+            justify-content: center;
+            align-items: center;
+            padding: 20px;
+        }
+
+        .analytics-modal.show {
+            display: flex;
+        }
+
+        .analytics-content {
+            background: white;
+            border-radius: 12px;
+            padding: 30px;
+            max-width: 600px;
+            max-height: 80vh;
+            overflow-y: auto;
+            width: 100%;
+            position: relative;
+        }
+
+        .close-btn {
+            position: absolute;
+            top: 15px;
+            right: 15px;
+            background: none;
+            border: none;
+            font-size: 1.5em;
+            cursor: pointer;
+            color: #666;
+        }
+
+        .close-btn:hover {
+            color: #333;
+        }
+
+        .analytics-header {
+            margin-bottom: 20px;
+        }
+
+        .analytics-header h2 {
+            color: #333;
+            margin-bottom: 10px;
+        }
+
+        .click-count {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            padding: 15px;
+            border-radius: 8px;
+            text-align: center;
+            font-size: 1.5em;
+            font-weight: 600;
+            margin-bottom: 20px;
+        }
+
+        .analytics-list {
+            max-height: 400px;
+            overflow-y: auto;
+        }
+
+        .click-item {
+            background: #f8f9fa;
+            padding: 12px;
+            border-radius: 6px;
+            margin-bottom: 10px;
+            border-left: 4px solid #667eea;
+            font-size: 0.9em;
+            color: #666;
+        }
+
+        .error-message {
+            background: #fee;
+            color: #c33;
+            padding: 12px 15px;
+            border-radius: 8px;
+            margin-bottom: 20px;
+            display: none;
+            border-left: 4px solid #c33;
+        }
+
+        .error-message.show {
+            display: block;
+        }
+
+        .success-message {
+            background: #efe;
+            color: #3c3;
+            padding: 12px 15px;
+            border-radius: 8px;
+            margin-bottom: 20px;
+            display: none;
+            border-left: 4px solid #3c3;
+        }
+
+        .success-message.show {
+            display: block;
+        }
+
+        .tab-btn {
+            background: #f0f0f0;
+            border: none;
+            padding: 12px 20px;
+            font-size: 1em;
+            font-weight: 600;
+            cursor: pointer;
+            border-radius: 6px 6px 0 0;
+            color: #666;
+            transition: all 0.3s;
+        }
+
+        .tab-btn:hover {
+            background: #e0e0e0;
+        }
+
+        .tab-btn.active {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+        }
+
+        .tab-content {
+            display: none;
+        }
+
+        .tab-content.active {
+            display: block;
+        }
+
+        .loading {
+            display: inline-block;
+            width: 20px;
+            height: 20px;
+            border: 3px solid #f3f3f3;
+            border-top: 3px solid #667eea;
+            border-radius: 50%;
+            animation: spin 1s linear infinite;
+        }
+
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>🔗 URL Shortener</h1>
+        <p class="subtitle">Shorten your long URLs instantly</p>
+
+        <!-- Tabs -->
+        <div style="display: flex; gap: 10px; margin-bottom: 25px; border-bottom: 2px solid #f0f0f0;">
+            <button class="tab-btn active" data-tab="shorten">Shorten</button>
+            <button class="tab-btn" data-tab="analytics">Analytics</button>
+            <button class="tab-btn" data-tab="metadata">Metadata</button>
+        </div>
+
+        <div id="errorMessage" class="error-message"></div>
+        <div id="successMessage" class="success-message"></div>
+
+        <!-- Shorten Tab -->
+        <div id="shortenTab" class="tab-content active">
+        <form id="urlForm">
+            <div class="form-group">
+                <label for="longUrl">Long URL *</label>
+                <input 
+                    type="text" 
+                    id="longUrl" 
+                    placeholder="https://example.com/very/long/url" 
+                    required
+                />
+            </div>
+
+            <div class="form-group">
+                <label for="customAlias">Custom Alias (optional)</label>
+                <input 
+                    type="text" 
+                    id="customAlias" 
+                    placeholder="my-link (4-30 chars, letters/numbers/-/_)" 
+                />
+            </div>
+
+            <div class="button-group">
+                <button type="submit" class="btn-shorten" id="shortenBtn">
+                    Shorten URL
+                </button>
+                <button type="reset" class="btn-reset">Clear</button>
+            </div>
+        </form>
+
+        <div id="resultSection" class="result-section">
+            <span class="result-label">Your Short URL:</span>
+            <div class="result-url">
+                <span id="shortUrl"></span>
+                <button class="copy-btn" id="copyBtn">Copy</button>
+            </div>
+
+            <div class="stats-section">
+                <div class="stat-item">
+                    <span>Short ID:</span>
+                    <strong id="shortId"></strong>
+                </div>
+                <div class="stat-item">
+                    <span>Total Clicks:</span>
+                    <strong id="totalClicks">0</strong>
+                </div>
+            </div>
+
+            <button class="analytics-btn" id="analyticsBtn">View Analytics</button>
+        </div>
+        </div>
+        <!-- End Shorten Tab -->
+
+        <!-- Analytics Tab -->
+        <div id="analyticsTab" class="tab-content">
+            <div class="form-group">
+                <label for="analyticsShortId">Short ID *</label>
+                <input 
+                    type="text" 
+                    id="analyticsShortId" 
+                    placeholder="Enter short ID (e.g., a1b2c3d4 or my-link)" 
+                />
+            </div>
+
+            <button id="fetchAnalyticsBtn" class="btn-shorten" style="width: 100%;">
+                Fetch Analytics
+            </button>
+
+            <div id="analyticsResultSection" class="result-section">
+                <div class="click-count" id="analyticsTotalClicks">0 Clicks</div>
+                <div class="stats-section">
+                    <div class="stat-item">
+                        <span>Short ID:</span>
+                        <strong id="analyticsShortIdDisplay"></strong>
+                    </div>
+                    <div class="stat-item">
+                        <span>Timezone:</span>
+                        <strong>Asia/Kolkata (IST)</strong>
+                    </div>
+                </div>
+                <h3 style="margin-top: 20px; margin-bottom: 10px; color: #333;">Click History:</h3>
+                <div class="analytics-list" id="analyticsClickHistory"></div>
+            </div>
+        </div>
+        <!-- End Analytics Tab -->
+
+        <!-- Metadata Tab -->
+        <div id="metadataTab" class="tab-content">
+            <div class="form-group">
+                <label for="metadataShortId">Short ID *</label>
+                <input 
+                    type="text" 
+                    id="metadataShortId" 
+                    placeholder="Enter short ID (e.g., a1b2c3d4 or my-link)" 
+                />
+            </div>
+
+            <button id="fetchMetadataBtn" class="btn-shorten" style="width: 100%;">
+                Fetch Metadata
+            </button>
+
+            <div id="metadataResultSection" class="result-section">
+                <div class="stats-section">
+                    <div class="stat-item">
+                        <span>Short ID:</span>
+                        <strong id="metadataShortIdDisplay"></strong>
+                    </div>
+                    <div class="stat-item">
+                        <span>Short URL:</span>
+                        <strong id="metadataShortUrlDisplay" style="word-break: break-all; cursor: pointer; color: #667eea; text-decoration: underline;"></strong>
+                    </div>
+                    <div class="stat-item">
+                        <span>Original URL:</span>
+                        <strong id="metadataOriginalUrlDisplay" style="word-break: break-all;"></strong>
+                    </div>
+                    <div class="stat-item">
+                        <span>Total Clicks:</span>
+                        <strong id="metadataTotalClicks">0</strong>
+                    </div>
+                    <div class="stat-item">
+                        <span>Created At (IST):</span>
+                        <strong id="metadataCreatedAt"></strong>
+                    </div>
+                    <div class="stat-item">
+                        <span>Last Updated (IST):</span>
+                        <strong id="metadataUpdatedAt"></strong>
+                    </div>
+                    <div class="stat-item">
+                        <span>Timezone:</span>
+                        <strong>Asia/Kolkata (IST)</strong>
+                    </div>
+                </div>
+            </div>
+        </div>
+        <!-- End Metadata Tab -->
+    </div>
+
+    <!-- Analytics Modal -->
+    <div id="analyticsModal" class="analytics-modal">
+        <div class="analytics-content">
+            <button class="close-btn" id="closeAnalyticsBtn">&times;</button>
+            <div class="analytics-header">
+                <h2>📊 Analytics</h2>
+                <div class="click-count" id="clickCount">0 Clicks</div>
+            </div>
+            <div class="analytics-list" id="analyticsList">
+                <p style="text-align: center; color: #999;">Loading...</p>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // Tab switching
+        document.querySelectorAll('.tab-btn').forEach(btn => {
+            btn.addEventListener('click', () => {
+                // Remove active class from all tabs and buttons
+                document.querySelectorAll('.tab-content').forEach(tab => tab.classList.remove('active'));
+                document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
+
+                // Add active class to clicked button and corresponding tab
+                btn.classList.add('active');
+                const tabName = btn.dataset.tab;
+                document.getElementById(tabName + 'Tab').classList.add('active');
+                errorMessage.classList.remove('show');
+                successMessage.classList.remove('show');
+            });
+        });
+
+        const form = document.getElementById('urlForm');
+        const longUrlInput = document.getElementById('longUrl');
+        const customAliasInput = document.getElementById('customAlias');
+        const shortenBtn = document.getElementById('shortenBtn');
+        const resultSection = document.getElementById('resultSection');
+        const shortUrlDisplay = document.getElementById('shortUrl');
+        const shortIdDisplay = document.getElementById('shortId');
+        const totalClicksDisplay = document.getElementById('totalClicks');
+        const copyBtn = document.getElementById('copyBtn');
+        const analyticsBtn = document.getElementById('analyticsBtn');
+        const analyticsModal = document.getElementById('analyticsModal');
+        const closeAnalyticsBtn = document.getElementById('closeAnalyticsBtn');
+        const analyticsList = document.getElementById('analyticsList');
+        const clickCount = document.getElementById('clickCount');
+        const errorMessage = document.getElementById('errorMessage');
+        const successMessage = document.getElementById('successMessage');
+
+        // Analytics Tab Elements
+        const analyticsShortIdInput = document.getElementById('analyticsShortId');
+        const fetchAnalyticsBtn = document.getElementById('fetchAnalyticsBtn');
+        const analyticsResultSection = document.getElementById('analyticsResultSection');
+        const analyticsTotalClicks = document.getElementById('analyticsTotalClicks');
+        const analyticsShortIdDisplay = document.getElementById('analyticsShortIdDisplay');
+        const analyticsClickHistory = document.getElementById('analyticsClickHistory');
+
+        // Metadata Tab Elements
+        const metadataShortIdInput = document.getElementById('metadataShortId');
+        const fetchMetadataBtn = document.getElementById('fetchMetadataBtn');
+        const metadataResultSection = document.getElementById('metadataResultSection');
+        const metadataShortIdDisplay = document.getElementById('metadataShortIdDisplay');
+        const metadataShortUrlDisplay = document.getElementById('metadataShortUrlDisplay');
+        const metadataOriginalUrlDisplay = document.getElementById('metadataOriginalUrlDisplay');
+        const metadataTotalClicks = document.getElementById('metadataTotalClicks');
+        const metadataCreatedAt = document.getElementById('metadataCreatedAt');
+        const metadataUpdatedAt = document.getElementById('metadataUpdatedAt');
+
+        let currentShortId = null;
+
+        // Show error message
+        function showError(message) {
+            errorMessage.textContent = message;
+            errorMessage.classList.add('show');
+            setTimeout(() => errorMessage.classList.remove('show'), 5000);
+        }
+
+        // Show success message
+        function showSuccess(message) {
+            successMessage.textContent = message;
+            successMessage.classList.add('show');
+            setTimeout(() => successMessage.classList.remove('show'), 3000);
+        }
+
+        // Shorten URL
+        form.addEventListener('submit', async (e) => {
+            e.preventDefault();
+            
+            const url = longUrlInput.value.trim();
+            const customAlias = customAliasInput.value.trim() || undefined;
+
+            if (!url) {
+                showError('Please enter a URL');
+                return;
+            }
+
+            shortenBtn.disabled = true;
+            shortenBtn.innerHTML = '<span class="loading"></span>';
+
+            try {
+                const response = await fetch('/url', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                    },
+                    body: JSON.stringify({
+                        url: url,
+                        ...(customAlias && { customAlias })
+                    })
+                });
+
+                const data = await response.json();
+
+                if (!response.ok) {
+                    throw new Error(data.error || 'Failed to shorten URL');
+                }
+
+                currentShortId = data.id;
+                shortUrlDisplay.textContent = data.shortUrl;
+                shortIdDisplay.textContent = data.id;
+                totalClicksDisplay.textContent = '0';
+                resultSection.classList.add('show');
+                showSuccess('URL shortened successfully!');
+                longUrlInput.value = '';
+                customAliasInput.value = '';
+
+            } catch (error) {
+                showError(error.message);
+            } finally {
+                shortenBtn.disabled = false;
+                shortenBtn.innerHTML = 'Shorten URL';
+            }
+        });
+
+        // Copy to clipboard
+        copyBtn.addEventListener('click', async () => {
+            const url = shortUrlDisplay.textContent;
+            try {
+                await navigator.clipboard.writeText(url);
+                copyBtn.textContent = 'Copied!';
+                copyBtn.classList.add('copied');
+                setTimeout(() => {
+                    copyBtn.textContent = 'Copy';
+                    copyBtn.classList.remove('copied');
+                }, 2000);
+            } catch (error) {
+                showError('Failed to copy to clipboard');
+            }
+        });
+
+        // View Analytics (from Shorten tab)
+        analyticsBtn.addEventListener('click', async () => {
+            if (!currentShortId) return;
+
+            analyticsModal.classList.add('show');
+            analyticsList.innerHTML = '<p style="text-align: center; color: #999;">Loading...</p>';
+
+            try {
+                const response = await fetch(`/url/analytics/${currentShortId}`);
+                const data = await response.json();
+
+                if (!response.ok) {
+                    throw new Error(data.error || 'Failed to fetch analytics');
+                }
+
+                clickCount.textContent = `${data.totalClicks} ${data.totalClicks === 1 ? 'Click' : 'Clicks'}`;
+                
+                if (data.analytics.length === 0) {
+                    analyticsList.innerHTML = '<p style="text-align: center; color: #999;">No clicks yet</p>';
+                } else {
+                    analyticsList.innerHTML = data.analytics.map(click => `
+                        <div class="click-item">
+                            📍 ${click.timestampIST}
+                        </div>
+                    `).join('');
+                }
+
+                totalClicksDisplay.textContent = data.totalClicks;
+
+            } catch (error) {
+                analyticsList.innerHTML = `<p style="color: #c33;">Error: ${error.message}</p>`;
+            }
+        });
+
+        // Close Analytics Modal
+        closeAnalyticsBtn.addEventListener('click', () => {
+            analyticsModal.classList.remove('show');
+        });
+
+        analyticsModal.addEventListener('click', (e) => {
+            if (e.target === analyticsModal) {
+                analyticsModal.classList.remove('show');
+            }
+        });
+
+        // ========== ANALYTICS TAB FUNCTIONALITY ==========
+        fetchAnalyticsBtn.addEventListener('click', async () => {
+            let shortId = analyticsShortIdInput.value.trim();
+
+            if (!shortId) {
+                showError('Please enter a short ID');
+                return;
+            }
+
+            // Extract short ID if user pasted full URL
+            if (shortId.includes('/url/')) {
+                shortId = shortId.split('/url/')[1];
+            }
+
+            fetchAnalyticsBtn.disabled = true;
+            fetchAnalyticsBtn.innerHTML = '<span class="loading"></span>';
+
+            try {
+                const response = await fetch(`/url/analytics/${shortId}`);
+                const data = await response.json();
+
+                if (!response.ok) {
+                    throw new Error(data.error || 'Failed to fetch analytics');
+                }
+
+                analyticsShortIdDisplay.textContent = shortId;
+                analyticsTotalClicks.textContent = `${data.totalClicks} ${data.totalClicks === 1 ? 'Click' : 'Clicks'}`;
+                
+                if (data.analytics.length === 0) {
+                    analyticsClickHistory.innerHTML = '<p style="text-align: center; color: #999;">No clicks recorded yet</p>';
+                } else {
+                    analyticsClickHistory.innerHTML = data.analytics.map(click => `
+                        <div class="click-item">
+                            📍 <strong>${click.timestampIST}</strong><br>
+                            <small>UTC: ${click.timestamp}</small>
+                        </div>
+                    `).join('');
+                }
+
+                analyticsResultSection.classList.add('show');
+                showSuccess('Analytics loaded successfully!');
+
+            } catch (error) {
+                showError(error.message);
+                analyticsResultSection.classList.remove('show');
+            } finally {
+                fetchAnalyticsBtn.disabled = false;
+                fetchAnalyticsBtn.innerHTML = 'Fetch Analytics';
+            }
+        });
+
+        // ========== METADATA TAB FUNCTIONALITY ==========
+        fetchMetadataBtn.addEventListener('click', async () => {
+            let shortId = metadataShortIdInput.value.trim();
+
+            if (!shortId) {
+                showError('Please enter a short ID');
+                return;
+            }
+
+            // Extract short ID if user pasted full URL
+            if (shortId.includes('/url/')) {
+                shortId = shortId.split('/url/')[1];
+            }
+
+            fetchMetadataBtn.disabled = true;
+            fetchMetadataBtn.innerHTML = '<span class="loading"></span>';
+
+            try {
+                const response = await fetch(`/url/meta/${shortId}`);
+                const data = await response.json();
+
+                if (!response.ok) {
+                    throw new Error(data.error || 'Failed to fetch metadata');
+                }
+
+                metadataShortIdDisplay.textContent = data.id;
+                metadataShortUrlDisplay.textContent = data.shortUrl;
+                metadataOriginalUrlDisplay.textContent = data.redirectUrl;
+                metadataTotalClicks.textContent = data.totalClicks;
+                metadataCreatedAt.textContent = data.createdAtIST;
+                metadataUpdatedAt.textContent = data.updatedAtIST;
+
+                metadataResultSection.classList.add('show');
+                showSuccess('Metadata loaded successfully!');
+
+            } catch (error) {
+                showError(error.message);
+                metadataResultSection.classList.remove('show');
+            } finally {
+                fetchMetadataBtn.disabled = false;
+                fetchMetadataBtn.innerHTML = 'Fetch Metadata';
+            }
+        });
+
+        // Allow Enter key to fetch analytics
+        analyticsShortIdInput.addEventListener('keypress', (e) => {
+            if (e.key === 'Enter') fetchAnalyticsBtn.click();
+        });
+
+        // Allow Enter key to fetch metadata
+        metadataShortIdInput.addEventListener('keypress', (e) => {
+            if (e.key === 'Enter') fetchMetadataBtn.click();
+        });
+    </script>
+</body>
+</html>

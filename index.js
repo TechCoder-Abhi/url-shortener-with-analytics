@@ -2,13 +2,18 @@ require('dotenv').config();
 const express = require("express");
 const { connectToMongoDB } = require('./connect');
 const urlRoutes = require('./routes/url');
+const path = require('path');
 
 
 const app = express();
 app.use(express.json());
 const port = process.env.PORT || 8001;
 
+// API Routes MUST come before static files
 app.use('/url', urlRoutes); //middleware for url routes
+
+// Serve static files from public folder (after API routes)
+app.use(express.static(path.join(__dirname, 'public')));
 
 connectToMongoDB(process.env.MONGO_URI)
     .then(() => {
