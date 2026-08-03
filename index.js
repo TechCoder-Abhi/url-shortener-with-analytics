@@ -15,6 +15,11 @@ app.use('/url', urlRoutes); //middleware for url routes
 // Serve static files from public folder (after API routes)
 app.use(express.static(path.join(__dirname, 'public')));
 
+// Health check endpoint (Render uses this)
+app.get('/health', (req, res) => {
+  res.json({ status: 'OK' });
+});
+
 connectToMongoDB(process.env.MONGO_URI)
     .then(() => {
         console.log("Connected to MongoDB");
